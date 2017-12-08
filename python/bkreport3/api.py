@@ -3,11 +3,12 @@ import requests
 import os,re
 from exceptions import ApiTokenError
 
-def get_data(token, url, per_page=100):
+def get_data(url, per_page=100):
     """
         Input: BK API token and an Endpoint
         Output: A list of json result from all pages in the pagination
     """
+    token = os.environ['BK_TOKEN']
     headers = {'Authorization': "Bearer " + token}
     params = {}
     params["per_page"] = per_page
@@ -18,7 +19,14 @@ def get_data(token, url, per_page=100):
     last_url_exists = True
     try:
         while last_url_exists:
+            # print(params)
             resp = _hit_api(url, headers, params, page_count)
+            if page_count == 1:
+                last_url = resp.links['last']['url']
+                match = re.search(r"page=([0-9]*)", last_url)
+                total_page_count = match.group(1)
+            progress = int(page_count)/int(total_page_count)*100
+            print("looping through pagination... progress: {}%".format(progress))
             page_count += 1
             # exit if it had reached the last page
             if not 'last' in resp.links:
@@ -44,8 +52,5 @@ def _hit_api(url, headers, params, page_count):
 
 
 if __name__ == '__main__':
-    token = os.environ['BK_TOKEN']
-
     url = "https://api.buildkite.com/v2/organizations/myob/pipelines"
-    pipelines = get_data(token,url,99)
-    # print(len(r))
+    pipelines = get_data(url)
