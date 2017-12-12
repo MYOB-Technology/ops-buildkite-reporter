@@ -1,6 +1,15 @@
+
+
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
+
+
+class GeneralApiError(Error):
+
+   def __init__(self, message):
+        self.message = message
+
 
 class ApiTokenError(Error):
     """Exception raised for errors in the input.
@@ -12,4 +21,16 @@ class ApiTokenError(Error):
 
     def __init__(self, expression, message):
         self.expression = expression
+        self.message = message
+
+
+class NoTeamError(Error):
+
+    def __init__(self, message):
+        self.message = message
+
+
+class EnvVarError(Error):
+
+    def __init__(self, message):
         self.message = message
