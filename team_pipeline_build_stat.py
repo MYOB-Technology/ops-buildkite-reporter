@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-    This module generate reports for the management to monitor BK adoption
+    Running this module can generate a report about how each team adopt the BK
 """
 
+from settings import TOKEN
+from settings import DRYRUN
+import requests
 import json
 import os
-from exceptions import NoTeamError, GeneralApiError
-from settings import TOKEN, DRYRUN
-import requests
+from exceptions import NoTeamError
+from exceptions import GeneralApiError
 from csv_ops import ProcessCsvFile
 
 GQL_QUERY = {"query": '''{
@@ -47,8 +50,7 @@ GQL_QUERY = {"query": '''{
                       }
                     }
                   }
-                }'''
-            }
+                }'''}
 
 
 def _team_pipelines(url):
@@ -88,7 +90,6 @@ def process_gql_resp(gql_resp):
                 last_build_time = "n/a"
             else:
                 last_build_time = team_pipe_details['builds']['edges'][0]['node']['last_build_time']
-
             result.append({
                 "team_slug": team_slug,
                 "pipe_slug": team_pipe_details['slug'],
@@ -99,19 +100,15 @@ def process_gql_resp(gql_resp):
     return result
 
 
-if __name__ == '__main__':
-    URL = "https://graphql.buildkite.com/v1"
-    FILE_PATH = os.path.join(os.path.dirname(__file__), 'result.json')
-    file_exists = os.path.isfile(FILE_PATH)
-
-####################
+def get_gql_resp(g_url):
+    file_path = os.path.join(os.path.dirname(__file__), 'result.json')
+    file_exists = os.path.isfile(file_path)
     if file_exists and DRYRUN:
-        print(file_exists, DRYRUN, file_exists and DRYRUN)
         print("load json and process data, without running expensive api hit")
         gql_resp = json.load(open('result.json'))
     else:
         print("running expensive api hit")
-        r = _team_pipelines(URL)
+        r = _team_pipelines(g_url)
         if r.status_code == 200:
             try:
                 json_resp = r.json()
@@ -127,7 +124,11 @@ if __name__ == '__main__':
         print("writing json resp to intermediate JSON file")
         with open('result.json', 'w') as out_file:
             json.dump(json_resp, out_file)
-##################
+    return gql_resp
+
+
+if __name__ == '__main__':
+    gql_resp = get_gql_resp("https://graphql.buildkite.com/v1")
     processed_data = process_gql_resp(gql_resp)
 
     p = ProcessCsvFile('.')
