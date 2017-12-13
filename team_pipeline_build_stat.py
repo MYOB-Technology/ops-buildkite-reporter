@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
+"""
+    This module generate reports for the management to monitor BK adoption
+"""
+
+import json
+import os
+from exceptions import NoTeamError, GeneralApiError
 from settings import TOKEN, DRYRUN
 import requests
-import json
-import os,re
-from exceptions import NoTeamError, GeneralApiError
 from csv_ops import ProcessCsvFile
 
 GQL_QUERY = {"query": '''{
@@ -46,6 +50,7 @@ GQL_QUERY = {"query": '''{
                 }'''
             }
 
+
 def _team_pipelines(url):
     """
         Input: BK API token from Global var and an Endpoint url
@@ -55,14 +60,13 @@ def _team_pipelines(url):
     headers = {}
     headers['Authorization'] = "Bearer {}".format(TOKEN)
     headers['Content-Type'] = 'application/json'
-
-    params = []
     payload = GQL_QUERY
     try:
-        resp = requests.post(url,headers=headers,data=json.dumps(payload))
+        resp = requests.post(url, headers=headers, data=json.dumps(payload))
         return resp
-    except Exception as e:
-        print("SOMETHING WENT WRONG...: ", e)
+    except Exception as err:
+        print("SOMETHING WENT WRONG...: ", err)
+
 
 def process_gql_resp(gql_resp):
     """
@@ -80,39 +84,26 @@ def process_gql_resp(gql_resp):
         team_pipelines = team['node']['pipelines']
         for team_pipe in team_pipelines['edges']:
             team_pipe_details = team_pipe['node']['pipeline']
-            if len(team_pipe_details['builds']['edges']) > 0:
-                last_build_time = team_pipe_details['builds']['edges'][0]['node']['last_build_time']
-            else:
+            if not team_pipe_details['builds']['edges']:
                 last_build_time = "n/a"
-            # print(
-            #         team_slug,
-            #         team_pipe_details['slug'],
-            #         team_pipe_details['pass_builds']['pass_builds_count'],
-            #         team_pipe_details['fail_builds']['fail_builds_count'],
-            #         last_build_time
-            #      )
+            else:
+                last_build_time = team_pipe_details['builds']['edges'][0]['node']['last_build_time']
 
-            result.append(
-                    {
-                        "team_slug": team_slug,
-                        "pipe_slug": team_pipe_details['slug'],
-                        "pass": team_pipe_details['pass_builds']['pass_builds_count'],
-                        "fail": team_pipe_details['fail_builds']['fail_builds_count'],
-                        "last": last_build_time
-                    }
-                )
-    # print("pipeline count within our Org: ", len(result))
+            result.append({
+                "team_slug": team_slug,
+                "pipe_slug": team_pipe_details['slug'],
+                "pass": team_pipe_details['pass_builds']['pass_builds_count'],
+                "fail": team_pipe_details['fail_builds']['fail_builds_count'],
+                "last": last_build_time
+                })
     return result
 
 
 if __name__ == '__main__':
-    url = "https://graphql.buildkite.com/v1"
-    file_path = os.path.join(os.path.dirname(__file__), 'result.json')
-    file_exists = os.path.isfile(file_path)
+    URL = "https://graphql.buildkite.com/v1"
+    FILE_PATH = os.path.join(os.path.dirname(__file__), 'result.json')
+    file_exists = os.path.isfile(FILE_PATH)
 
-    print("DRYRUN:", DRYRUN, type(DRYRUN), "||| file_exists:", file_exists)
-    # import sys
-    # sys.exit(0)
 ####################
     if file_exists and DRYRUN:
         print(file_exists, DRYRUN, file_exists and DRYRUN)
@@ -120,7 +111,7 @@ if __name__ == '__main__':
         gql_resp = json.load(open('result.json'))
     else:
         print("running expensive api hit")
-        r = _team_pipelines(url)
+        r = _team_pipelines(URL)
         if r.status_code == 200:
             try:
                 json_resp = r.json()
@@ -142,11 +133,11 @@ if __name__ == '__main__':
     p = ProcessCsvFile('.')
     p.prepare_result_file()
     p.write_csv_header([
-            'team',
-            'pipeline',
-            'pass_builds',
-            'failed_builds',
-            'last_used'
+        'team',
+        'pipeline',
+        'pass_builds',
+        'failed_builds',
+        'last_used'
         ])
     for data in processed_data:
         p.write_csv([
@@ -156,4 +147,3 @@ if __name__ == '__main__':
             data['fail'],
             data['last']
         ])
-

@@ -1,4 +1,6 @@
-import os,csv,datetime
+import os
+import csv
+import datetime
 
 
 class ProcessCsvFile(object):
@@ -38,9 +40,12 @@ class ProcessCsvFile(object):
 
     def prepare_result_file(self):
         """
-            The result file name needs to be calculated on the spot and time-stamped
-            on the filename in order to avoid conflict on file name.
+            The result file name needs to be calculated on the spot and time
+            stamped on the filename in order to avoid conflict on file name.
         """
         result_filename = 'result_' + str(
             datetime.datetime.now().strftime("%Y%m%d_%H%M%S")) + '.csv'
-        self._output_filepath = os.path.join(self._output_filepath,result_filename)
+        self._output_filepath = os.path.join(
+            self._output_filepath,
+            result_filename
+            )

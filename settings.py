@@ -1,5 +1,7 @@
-import os, sys
+import os
+import sys
 from exceptions import EnvVarError
+
 
 def convert_str_bool(var, value):
     """
