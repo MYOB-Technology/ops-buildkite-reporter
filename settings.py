@@ -22,11 +22,6 @@ def convert_str_bool(var, value):
     return var
 
 
-def check_env_var_completeness(key_list):
-    for key in key_list:
-        if not key in globals():
-            raise EnvVarError("Value for {} should not be empty".format(key))
-
 
 def setup_essential_global_var(key_list):
 
@@ -34,7 +29,7 @@ def setup_essential_global_var(key_list):
     # name i.e. env var: BK_TOKEN='123', then converts it to
     # Global var: TOKEN='123'
     for key in os.environ:
-        if key[:3] == 'BK_':
+        if key[:3] == 'BK_': # if key.startswith("BK_")
             name = key[3:]
             env_var_value = os.getenv(key)
             if env_var_value in ("True", "False"):
@@ -43,7 +38,10 @@ def setup_essential_global_var(key_list):
                 raise EnvVarError("Value of {} should't be empty".format(name))
             else:
                 globals()[name] = env_var_value
-    check_env_var_completeness(key_list)
+
+    for key in key_list:
+        if not key in globals():
+            raise EnvVarError("Value for {} should not be empty".format(key))
 
 
 setup_essential_global_var(['TOKEN', 'DRYRUN'])

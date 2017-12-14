@@ -128,7 +128,10 @@ def get_gql_resp(g_url):
 
 
 if __name__ == '__main__':
-    gql_resp = get_gql_resp("https://graphql.buildkite.com/v1")
+    try:
+        gql_resp = get_gql_resp("https://graphql.buildkite.com/v1")
+    except ValueError as err:
+        print(err)
     processed_data = process_gql_resp(gql_resp)
 
     p = ProcessCsvFile('.')
