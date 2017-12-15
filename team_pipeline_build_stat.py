@@ -3,15 +3,12 @@
 """
     Running this module can generate a report about how each team adopt the BK
 """
-
-from settings import TOKEN
-from settings import DRYRUN
 import requests
 import json
 import os
 from exceptions import NoTeamError
 from exceptions import GeneralApiError
-from csv_ops import ProcessCsvFile
+
 
 GQL_QUERY = {"query": '''{
                   organization(slug:"myob") {
@@ -53,16 +50,16 @@ GQL_QUERY = {"query": '''{
                 }'''}
 
 
-def _team_pipelines(url):
+def _team_pipelines(url, auth_token, gql_query):
     """
-        Input: BK API token from Global var and an Endpoint url
-        Output: A list of json result of
+        Input : BK API token and an Endpoint url
+        Output: A list of json result
     """
 
     headers = {}
-    headers['Authorization'] = "Bearer {}".format(TOKEN)
+    headers['Authorization'] = "Bearer {}".format(auth_token)
     headers['Content-Type'] = 'application/json'
-    payload = GQL_QUERY
+    payload = gql_query
     try:
         resp = requests.post(url, headers=headers, data=json.dumps(payload))
         return resp
@@ -70,9 +67,44 @@ def _team_pipelines(url):
         print("SOMETHING WENT WRONG...: ", err)
 
 
+
+def get_gql_resp(g_url, dryrun=False, auth_token=""):
+
+    file_path = os.path.join(os.path.dirname(__file__), 'result.json')
+    file_exists = os.path.isfile(file_path)
+
+    if file_exists and dryrun:
+        print("load json and process data, without running expensive api hit")
+        gql_resp = json.load(open('result.json'))
+    else:
+        print("running expensive api hit")
+        r = _team_pipelines(g_url, auth_token, GQL_QUERY)
+        if r.status_code == 200:
+            try:
+                json_resp = r.json()
+            except ValueError as ve:
+                print(ve)
+                raise ValueError
+            gql_resp = json_resp
+        else:
+            raise GeneralApiError(
+                "not getting valid reply" +
+                "status_code is {}".format(r.status_code))
+    if not file_exists and dryrun:
+        print("writing json resp to intermediate JSON file")
+        with open('result.json', 'w') as out_file:
+            json.dump(json_resp, out_file)
+    return gql_resp
+
+
 def process_gql_resp(gql_resp):
     """
-        This module processes gql response JSON
+        This module processes gql response JSON to get"
+                "team_slug"
+                "pipe_slug"
+                "pass"
+                "fail"
+                "last"
         Input:  graphQL response JSON
         Output: List of Dictionaries including data for the CSV columns
     """
@@ -99,55 +131,3 @@ def process_gql_resp(gql_resp):
                 })
     return result
 
-
-def get_gql_resp(g_url):
-    file_path = os.path.join(os.path.dirname(__file__), 'result.json')
-    file_exists = os.path.isfile(file_path)
-    if file_exists and DRYRUN:
-        print("load json and process data, without running expensive api hit")
-        gql_resp = json.load(open('result.json'))
-    else:
-        print("running expensive api hit")
-        r = _team_pipelines(g_url)
-        if r.status_code == 200:
-            try:
-                json_resp = r.json()
-            except ValueError as ve:
-                print(ve)
-                raise ValueError
-            gql_resp = json_resp
-        else:
-            raise GeneralApiError(
-                "not getting valid reply" +
-                "status_code is {}".format(r.status_code))
-    if not file_exists and DRYRUN:
-        print("writing json resp to intermediate JSON file")
-        with open('result.json', 'w') as out_file:
-            json.dump(json_resp, out_file)
-    return gql_resp
-
-
-if __name__ == '__main__':
-    try:
-        gql_resp = get_gql_resp("https://graphql.buildkite.com/v1")
-    except ValueError as err:
-        print(err)
-    processed_data = process_gql_resp(gql_resp)
-
-    p = ProcessCsvFile('.')
-    p.prepare_result_file()
-    p.write_csv_header([
-        'team',
-        'pipeline',
-        'pass_builds',
-        'failed_builds',
-        'last_used'
-        ])
-    for data in processed_data:
-        p.write_csv([
-            data['team_slug'],
-            data['pipe_slug'],
-            data['pass'],
-            data['fail'],
-            data['last']
-        ])
