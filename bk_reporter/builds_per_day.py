@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from api import get_data
-from convert_datetime import strip_date
+from bk_reporter.rest_api_utils import get_data
+from bk_reporter.convert_datetime import strip_date
 from itertools import groupby
+
 
 def _get_pipeline(processed_gql_data):
     """
@@ -18,12 +19,12 @@ def _get_pipeline(processed_gql_data):
         ]
 
 
-def _get_builds_from_pipeline(pipeline_slug):
+def _get_builds_from_pipeline(pipeline_slug, rest_api_url):
     """
         Input : [pipeline-slug]
         Output: [{date: daily_build_count}]
     """
-    build_url = "https://api.buildkite.com/v2/organizations/myob/pipelines/{}/builds".format(pipeline_slug)
+    build_url = rest_api_url + "/{}/builds".format(pipeline_slug)
     print("build_url", build_url)
     try:
         resp = get_data(build_url,100)
@@ -35,8 +36,11 @@ def _get_builds_from_pipeline(pipeline_slug):
     return result
 
 
-def get_builds_per_day(processed_gql_data):
+def get_builds_per_day(processed_gql_data, rest_api_url):
     """
+        Main func of this module, depends on processed-data generated
+        by team_pipeline_build_stat module
+
         Input : processed_gql_data
         Output: [{team:team, pipeline:pipeline, date:date, builds_count}]
     """
@@ -44,13 +48,8 @@ def get_builds_per_day(processed_gql_data):
     pipelines = _get_pipeline(processed_gql_data)
     team_pipe_buildcount = []
     for pipe in pipelines:
-        date_build_count = _get_builds_from_pipeline(pipe["pipe_slug"])
+        date_build_count = _get_builds_from_pipeline(pipe["pipe_slug"], rest_api_url)
         for item_date_build_count in date_build_count:
-            # print(item_date_build_count, type(item_date_build_count))
-            # for key, value in item_date_build_count.iteritems():
-            #     print(key, value)
-            # import sys
-            # sys.exit(0)
             team_pipe_buildcount.append({
                 "team":pipe["team_slug"],
                 "pipe":pipe["pipe_slug"],
@@ -58,6 +57,4 @@ def get_builds_per_day(processed_gql_data):
                 "builds_count":list(item_date_build_count.values())[0]
                 })
         [print(item) for item in team_pipe_buildcount]
-
-    # [print(item) for item in team_pipe_buildcount]
     return team_pipe_buildcount

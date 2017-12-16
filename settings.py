@@ -3,7 +3,7 @@
     This module abstracts most of environment setup tasks
 """
 import os
-from exceptions import EnvVarError
+from bk_reporter.exceptions import EnvVarError
 
 
 def convert_str_bool(var, value):
@@ -47,4 +47,6 @@ def verify_essential_var(var_dict, key_list):
     """
     pass
 
+
 GRAPHQL_URL = "https://graphql.buildkite.com/v1"
+REST_API_URL = "https://api.buildkite.com/v2/organizations/myob/pipelines"

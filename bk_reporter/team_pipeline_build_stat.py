@@ -1,16 +1,9 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
     Running this module can generate a report about how each team adopt the BK
 """
-import requests
-import json
-import os
-from exceptions import NoTeamError
-from exceptions import GeneralApiError
 
-
-GQL_QUERY = {"query": '''{
+GQL_QUERY_TEAM_PIPE_BUILD = {"query": '''{
                   organization(slug:"myob") {
                     teams(first:500) {
                       count
@@ -50,54 +43,7 @@ GQL_QUERY = {"query": '''{
                 }'''}
 
 
-def _team_pipelines(url, auth_token, gql_query):
-    """
-        Input : BK API token and an Endpoint url
-        Output: A list of json result
-    """
-
-    headers = {}
-    headers['Authorization'] = "Bearer {}".format(auth_token)
-    headers['Content-Type'] = 'application/json'
-    payload = gql_query
-    try:
-        resp = requests.post(url, headers=headers, data=json.dumps(payload))
-        return resp
-    except Exception as err:
-        print("SOMETHING WENT WRONG...: ", err)
-
-
-
-def get_gql_resp(g_url, dryrun=False, auth_token=""):
-
-    file_path = os.path.join(os.path.dirname(__file__), 'result.json')
-    file_exists = os.path.isfile(file_path)
-
-    if file_exists and dryrun:
-        print("load json and process data, without running expensive api hit")
-        gql_resp = json.load(open('result.json'))
-    else:
-        print("running expensive api hit")
-        r = _team_pipelines(g_url, auth_token, GQL_QUERY)
-        if r.status_code == 200:
-            try:
-                json_resp = r.json()
-            except ValueError as ve:
-                print(ve)
-                raise ValueError
-            gql_resp = json_resp
-        else:
-            raise GeneralApiError(
-                "not getting valid reply" +
-                "status_code is {}".format(r.status_code))
-    if not file_exists and dryrun:
-        print("writing json resp to intermediate JSON file")
-        with open('result.json', 'w') as out_file:
-            json.dump(json_resp, out_file)
-    return gql_resp
-
-
-def process_gql_resp(gql_resp):
+def get_team_pipe_build_stat(gql_resp):
     """
         This module processes gql response JSON to get"
                 "team_slug"
@@ -130,4 +76,3 @@ def process_gql_resp(gql_resp):
                 "last": last_build_time
                 })
     return result
-

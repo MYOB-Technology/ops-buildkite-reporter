@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import logging
-from settings import setup_essential_var
-from settings import GRAPHQL_URL
-from team_pipeline_build_stat import get_gql_resp
-from team_pipeline_build_stat import process_gql_resp
-from builds_per_day import get_builds_per_day
-from csv_ops import ProcessCsvFile
+from settings import (
+    setup_essential_var,
+    GRAPHQL_URL,
+    REST_API_URL)
+# import custom utils
+from bk_reporter.gql_utils import get_gql_resp
+from bk_reporter.csv_ops import ProcessCsvFile
+# 1st feature delivery
+from bk_reporter.team_pipeline_build_stat import (
+    GQL_QUERY_TEAM_PIPE_BUILD,
+    get_team_pipe_build_stat)
+# 2nd feature delivery
+from bk_reporter.builds_per_day import get_builds_per_day
+# 3rd feature delivery
+from bk_reporter.period_build_stat import iterate_period_for_builds
+
 
 # setup logging
 
@@ -24,18 +34,15 @@ else:
     print("I am NOT running in AWS-LAMBDA")
 
 
-try:
-    gql_resp = get_gql_resp(GRAPHQL_URL, var_dict["DRYRUN"], var_dict["TOKEN"])
-except ValueError as err:
-        print(err)
-processed_data = process_gql_resp(gql_resp)
-# for item in processed_data:
-#     print(item["team_slug"], item["pipe_slug"])
-# print(len(processed_data))
-builds_per_day = get_builds_per_day(processed_data)
+# try:
+#     gql_resp = get_gql_resp(GRAPHQL_URL, GQL_QUERY_TEAM_PIPE_BUILD, var_dict["DRYRUN"], var_dict["TOKEN"])
+# except ValueError as err:
+#         print(err)
+# processed_data = get_team_pipe_build_stat(gql_resp)
+## 2nd feature delivery
+# builds_per_day = get_builds_per_day(processed_data, REST_API_URL)
 
-
-# # csv-ops
+# # csv-ops-I
 # p = ProcessCsvFile(".")
 # p.prepare_result_file()
 # p.write_csv_header([
@@ -54,19 +61,42 @@ builds_per_day = get_builds_per_day(processed_data)
 #         data["last"]
 #     ])
 
-# csv-ops
+# csv-ops-II
+# p = ProcessCsvFile(".")
+# p.prepare_result_file()
+# p.write_csv_header([
+#     "team",
+#     "pipeline",
+#     "date",
+#     "builds_count",
+#     ])
+# for data in builds_per_day:
+#     p.write_csv([
+#         data["team"],
+#         data["pipe"],
+#         data["date"],
+#         data["builds_count"],
+#     ])
+
+
+## 3rd delivery:
+## input example for FUNC "iterate_period_for_builds"
+# org_slug = '"myob"'
+# week_start = '"2017-08-07T23:28:48Z"'
+# week_end = '"2017-08-14T23:28:48Z"'
+period_build_count = iterate_period_for_builds(2017, '"myob"', GRAPHQL_URL, var_dict["DRYRUN"], var_dict["TOKEN"])
+
+# csv-ops-III
 p = ProcessCsvFile(".")
 p.prepare_result_file()
 p.write_csv_header([
-    "team",
-    "pipeline",
-    "date",
-    "builds_count",
+    "week",
+    "passed_builds",
+    "failed_builds",
     ])
-for data in builds_per_day:
+for data in period_build_count:
     p.write_csv([
-        data["team"],
-        data["pipe"],
-        data["date"],
-        data["builds_count"],
+        data["week"],
+        data["pass_build"],
+        data["fail_build"],
     ])
