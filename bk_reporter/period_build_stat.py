@@ -66,8 +66,8 @@ def _generate_week_range(year):
         Input : year (2016, 2017 etc)
         Output: [{
             "week": "34.2017",
-            "wk_start": '"2017-08-07T23:28:48Z"'
-            "wk_end"  : '"2017-08-14T23:28:48Z"'
+            "wk_start": '"2017-08-07T00:00:00Z"'
+            "wk_end"  : '"2017-08-14T23:59:59Z"'
             }]
     """
     result = []
@@ -95,7 +95,11 @@ def _generate_week_range(year):
 def iterate_period_for_builds(year, org_slug, gql_url, dryrun, token):
     """
         Input : year, org_slug
-        Output:
+        Output: {
+            "week": <str>, (i.e. "34.2017")
+            "pass_build": <datetime>,
+            "fail_build": <datetime>
+            }
     """
     wk_fences = _generate_week_range(year)
     result = []
@@ -107,5 +111,5 @@ def iterate_period_for_builds(year, org_slug, gql_url, dryrun, token):
         result.append(
                 {"week": wk["week"], "pass_build": analysed_data["pass_build"], "fail_build": analysed_data["fail_build"]}
             )
-    print(result)
+    # print(result)
     return  result

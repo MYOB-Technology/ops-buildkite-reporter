@@ -3,6 +3,7 @@
     Running this module can generate a report about how each team adopt the BK
 """
 
+
 GQL_QUERY_TEAM_PIPE_BUILD = {"query": '''{
                   organization(slug:"myob") {
                     teams(first:500) {

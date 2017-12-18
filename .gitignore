@@ -1,5 +1,10 @@
+# Python tmp files
 __pycache__
-*.csv
 *.pyc
+
+# Data files
+*.csv
 *.json
+
+# general tmp files
 .DS_Store
