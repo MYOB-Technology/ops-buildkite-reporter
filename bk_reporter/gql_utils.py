@@ -24,7 +24,6 @@ def _post_gql_query(url, auth_token, gql_query):
         print("SOMETHING WENT WRONG...: ", err)
 
 
-
 def get_gql_resp(g_url, gql_query, dryrun=False, auth_token=""):
 
     file_path = os.path.join(os.path.dirname(__file__), 'result.json')

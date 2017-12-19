@@ -2,7 +2,7 @@
 """
     Running this module can generate a report about how each team adopt the BK
 """
-
+from bk_reporter.exceptions import NoTeamError
 
 GQL_QUERY_TEAM_PIPE_BUILD = {"query": '''{
                   organization(slug:"myob") {

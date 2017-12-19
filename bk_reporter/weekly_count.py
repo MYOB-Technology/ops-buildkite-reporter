@@ -71,10 +71,8 @@ def get_accumulated_weekly_stat(counter_obj):
     result = {}
     previous_count = 0
     for key in counter_obj.keys():
-        # print("key", key, "value", counter_obj[key], "previous_count", previous_count)
         result[key] = counter_obj[key] + previous_count
         previous_count = result[key]
-    # print(result, type(result))
     return result
 
 
@@ -98,8 +96,6 @@ def join_count_with_topic(count_dict, topic):
     """
     result = []
     for key in count_dict.keys():
-        item = {topic: {"week": key, "count": count_dict[key]}}
-        foo = {topic: {"week": key, "count": count_dict[key]}}
         result.append(
             {"week": key, "count": count_dict[key]}
         )
@@ -112,8 +108,7 @@ def access_createdAt_date(gql_url, gql_query, token, topic):
         Outout: a list of datetime string representing "createAt" time
     """
     dryrun = False
-    gql_resp = get_gql_resp(gql_url,gql_query,dryrun,token)
-    # print(gql_resp["data"]["organization"][topic]["edges"]) #["node"]["createAt"])
+    gql_resp = get_gql_resp(gql_url, gql_query, dryrun, token)
     nodes = gql_resp["data"]["organization"][topic]["edges"]
     return [datetime["node"]["createdAt"] for datetime in nodes]
 
@@ -130,7 +125,7 @@ def prepare_data_for_csv(dict_datetime, topic):
     for key in dict_datetime.keys():
         result.append({
             "week": key,
-            topic : dict_datetime[key]
+            topic: dict_datetime[key]
         })
     print(result)
     return result
@@ -168,20 +163,4 @@ def join_results(source_dict, list_target_dict, topic):
             last_value = source_dict[item["week"]]
         else:
             item.update({topic: last_value})
-    # print(list_target_dict)
     return list_target_dict
-
-if __name__ == '__main__':
-    # from convert_datetime import get_week_number_of_date
-    # list_date_str = [
-    #     "2017-08-07T23:28:48Z",
-    #     "2017-08-10T23:28:48Z",
-    #     "2017-08-04T23:28:48Z",
-    #     "2017-09-07T23:28:48Z"
-    # ]
-    # counts = generate_weekly_stat(list_date_str)
-    # stat = get_accumulated_weekly_stat(counts)
-    # topic_stat = join_count_with_topic(stat, "pipe_count")
-    # print(topic_stat)
-    # join_results({}, topic_stat)
-    pass

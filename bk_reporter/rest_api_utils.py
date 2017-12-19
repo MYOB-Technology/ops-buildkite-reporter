@@ -34,7 +34,7 @@ def get_data(url, per_page=100):
                 match = re.search(r"page=([0-9]*)", last_url)
                 total_page_count = match.group(1)
             progress = round(int(page_count)/int(total_page_count)*100, 1)
-            print("looping through pagination... progress: {}%".format(progress))
+            print("looping through pages...progress: {}%".format(progress))
             page_count += 1
             # exit if it had reached the last page
             if not "last" in resp.links:
@@ -42,9 +42,13 @@ def get_data(url, per_page=100):
             if resp.status_code == 200:
                 result += resp.json()
             elif resp.status_code == 401:
-                raise ApiTokenError(resp.status_code,"token is not valid at all")
+                raise ApiTokenError(
+                    resp.status_code,
+                    "token is not valid at all")
             elif resp.status_code == 403:
-                raise ApiTokenError(resp.status_code,"insufficient token scope")
+                raise ApiTokenError(
+                    resp.status_code,
+                    "insufficient token scope")
         print(len(result))
         return result
     except Exception as e:
@@ -55,7 +59,7 @@ def get_data(url, per_page=100):
 def _hit_api(url, headers, params, page_count):
     params["page"] = str(page_count)
     try:
-        resp = requests.get(url,headers=headers,params=params)
+        resp = requests.get(url, headers=headers, params=params)
         return resp
     except Exception as e:
-        print("SOMETHING WRONG: hit_api",e)
+        print("SOMETHING WRONG: hit_api", e)

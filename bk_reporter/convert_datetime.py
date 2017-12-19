@@ -21,7 +21,9 @@ def get_week_number_of_date(string, format_string="%Y-%m-%dT%H:%M:%SZ"):
     """
     if string:
         try:
-            formatted = datetime.datetime.strptime(string, format_string).date()
+            formatted = datetime.datetime.strptime(
+                string,
+                format_string).date()
         except ValueError as v_err:
             print("ValueError!")
             raise ValueError(
@@ -38,9 +40,7 @@ def get_week_number_of_date(string, format_string="%Y-%m-%dT%H:%M:%SZ"):
 
 if __name__ == '__main__':
     datestr = "2017-08-07T23:28:48Z"
-    # datestr = ""
     result = strip_date(datestr, "%Y-%m-%dT%H:%M:%SZ")
     print(result, type(result))
     result = get_week_number_of_date(datestr, "%Y-%m-%dT%H:%M:%SZ")
     print(result, type(result))
-

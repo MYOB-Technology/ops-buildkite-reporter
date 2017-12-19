@@ -56,14 +56,13 @@ def _analyse_builds(gql_resp):
     for node in node_list:
         pass_build += int(node["node"]["pass_build"]["count"])
         fail_build += int(node["node"]["fail_build"]["count"])
-    period_build_stat = {"pass_build":pass_build, "fail_build":fail_build}
+    period_build_stat = {"pass_build": pass_build, "fail_build": fail_build}
     print("pass_build", pass_build, "fail_build", fail_build)
     return period_build_stat
 
 
 def _generate_week_range(year):
-    """
-        Input : year (2016, 2017 etc)
+    """ Input : year (2016, 2017 etc)
         Output: [{
             "week": "34.2017",
             "wk_start": '"2017-08-07T00:00:00Z"'
@@ -79,15 +78,15 @@ def _generate_week_range(year):
         week_str = str(num_week) + "." + str(year)
         wk_start = '"' + datetime.strptime(
             week +
-            "-1", # @Monday of the week
+            "-1",  # @Monday of the week
             "%W.%Y-%w"
             ).isoformat(sep="T") + '"'
         wk_end = '"' + datetime.strptime(
             week +
-            "-0" + # @Sunday of the week
+            "-0" +  # @Sunday of the week
             "-23-59-59",
             "%W.%Y-%w-%H-%M-%S").isoformat(sep="T") + '"'
-        result.append({"week":week_str, "wk_start":wk_start, "wk_end":wk_end })
+        result.append({"week": week_str, "wk_start": wk_start, "wk_end": wk_end})
     # print(result)
     return result
 
@@ -101,11 +100,10 @@ def iterate_period_for_builds(year, org_slug, gql_url, dryrun, token):
             "fail_build": <datetime>
             }
 
-    ## input example for FUNC "iterate_period_for_builds"
-    # org_slug = '"myob"'
-    # week_start = '"2017-08-07T23:28:48Z"'
-    # week_end = '"2017-08-14T23:28:48Z"'
-
+        ## input example for FUNC "iterate_period_for_builds"
+        # org_slug = '"myob"'
+        # week_start = '"2017-08-07T23:28:48Z"'
+        # week_end = '"2017-08-14T23:28:48Z"'
     """
     wk_fences = _generate_week_range(year)
     result = []
@@ -114,11 +112,11 @@ def iterate_period_for_builds(year, org_slug, gql_url, dryrun, token):
         wk_query = _build_gql_query(org_slug, wk["wk_start"], wk["wk_end"])
         gql_resp = get_gql_resp(gql_url, wk_query, dryrun, token)
         analysed_data = _analyse_builds(gql_resp)
-        result.append(
-                {"week": wk["week"], "pass_build": analysed_data["pass_build"], "fail_build": analysed_data["fail_build"]}
-            )
-    # print(result)
-    return  result
+        result.append({
+                "week": wk["week"],
+                "pass_build": analysed_data["pass_build"],
+                "fail_build": analysed_data["fail_build"]})
+    return result
 
 
 def convert_list_to_dict(dict_array):
@@ -138,5 +136,4 @@ def convert_list_to_dict(dict_array):
             "pass_build": dict_item["pass_build"],
             "fail_build": dict_item["fail_build"]
         }
-    print(result)
     return result
