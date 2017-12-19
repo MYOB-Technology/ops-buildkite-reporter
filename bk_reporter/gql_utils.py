@@ -3,8 +3,8 @@
 import requests
 import json
 import os
-from bk_reporter.exceptions import NoTeamError
 from bk_reporter.exceptions import GeneralApiError
+
 
 def _post_gql_query(url, auth_token, gql_query):
     """
@@ -44,8 +44,9 @@ def get_gql_resp(g_url, gql_query, dryrun=False, auth_token=""):
                 raise ValueError
             gql_resp = json_resp
         else:
+            print(r.headers)
             raise GeneralApiError(
-                "not getting valid reply" +
+                "not getting valid reply..." +
                 "status_code is {}".format(r.status_code))
     if not file_exists and dryrun:
         print("writing json resp to intermediate JSON file")

@@ -113,3 +113,24 @@ def iterate_period_for_builds(year, org_slug, gql_url, dryrun, token):
             )
     # print(result)
     return  result
+
+
+def convert_list_to_dict(dict_array):
+    """
+        reorganise team-pipe-build-stat list
+        from: [
+            {week, pass_build, fail_build}
+        ]
+        to: {
+            week: {pass_build, fail_build}
+        }
+    """
+    result = {}
+    for dict_item in dict_array:
+        week = dict_item["week"]
+        result[week] = {
+            "pass_build": dict_item["pass_build"],
+            "fail_build": dict_item["fail_build"]
+        }
+    print(result)
+    return result
