@@ -100,6 +100,12 @@ def iterate_period_for_builds(year, org_slug, gql_url, dryrun, token):
             "pass_build": <datetime>,
             "fail_build": <datetime>
             }
+
+    ## input example for FUNC "iterate_period_for_builds"
+    # org_slug = '"myob"'
+    # week_start = '"2017-08-07T23:28:48Z"'
+    # week_end = '"2017-08-14T23:28:48Z"'
+
     """
     wk_fences = _generate_week_range(year)
     result = []

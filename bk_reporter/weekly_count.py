@@ -4,13 +4,11 @@ from collections import Counter
 from bk_reporter.gql_utils import get_gql_resp
 from bk_reporter.convert_datetime import get_week_number_of_date
 
-
 GQL_QUERY_WEEKLY_COUNT_TEAM = {"query": '''{
                   organization(slug:"myob") {
                     teams(first:500) {
                       edges {
                         node {
-                          slug
                           createdAt
                         }
                       }
@@ -23,13 +21,13 @@ GQL_QUERY_WEEKLY_COUNT_PIPE = {"query": '''{
                     pipelines(first:500) {
                       edges {
                         node {
-                          slug
                           createdAt
                         }
                       }
                     }
                   }
                 }'''}
+
 
 def generate_weekly_stat(list_datetime):
     """
@@ -138,42 +136,20 @@ def prepare_data_for_csv(dict_datetime, topic):
     return result
 
 
-def convert_list_to_dict(dict_array):
-    """
-        reorganise team-pipe-build-stat list
-        from: [
-            {week, pass_build, fail_build}
-        ]
-        to: {
-            week: {pass_build, fail_build}
-        }
-    """
-    result = {}
-    for dict_item in dict_array:
-        week = dict_item["week"]
-        result[week] = {
-            "pass_build": dict_item["pass_build"],
-            "fail_build": dict_item["fail_build"]
-        }
-    print(result)
-    return result
-
-
-def join_results(source_dict, target_dict):
+def join_results(source_dict, list_target_dict, topic):
     """
         Input:
-            - previously calculated list[{result_dictionary}]
+            - source_list: recently calculated list[{result_dictionary}]
+                {
+                    {<week>: <pipe_count>}
+                }
+            - target_list: previously calculated list[{result_dictionary}]
                 [{
                     "week": <str>, (i.e. "34.2017")
                     "pass_build": <datetime>,
                     "fail_build": <datetime>
                 }]
-            - recently calculated list[{result_dictionary}]
-                [{
-                    "week": <str>, (i.e. "34.2017")
-                    "pipe_count": <int>, (weekly)
-                    "team_count": <int> (weekly)
-                }]
+            - topic: this will be treated as Key for the new dict
         Output:
             Using "week" as "KEY",
             a joined table of results list[{result_dictionary}]
@@ -185,16 +161,15 @@ def join_results(source_dict, target_dict):
                     "team_count": <int> (weekly)
                 }]
     """
-
-    for item in source_dict:
-        # topic = item_dict.get(key)
-        # print(topic)
-        for key, value in item.items():
-            print("key", key, ", value", item[key])
-
-    # for key, value in list_source_weekly_count_dict.items():
-    #     print(key)
-    # print
+    last_value = 0
+    for item in list_target_dict:
+        if item["week"] in source_dict:
+            item.update({topic: source_dict[item["week"]]})
+            last_value = source_dict[item["week"]]
+        else:
+            item.update({topic: last_value})
+    # print(list_target_dict)
+    return list_target_dict
 
 if __name__ == '__main__':
     # from convert_datetime import get_week_number_of_date

@@ -20,6 +20,8 @@ from bk_reporter.builds_per_day import get_builds_per_day
 from bk_reporter.period_build_stat import iterate_period_for_builds
 
 from bk_reporter.period_build_stat import convert_list_to_dict
+from bk_reporter.weekly_count import *
+
 
 def main():
 
@@ -96,12 +98,9 @@ def main():
 
 
     ## 3rd delivery:
-    ## input example for FUNC "iterate_period_for_builds"
-    # org_slug = '"myob"'
-    # week_start = '"2017-08-07T23:28:48Z"'
-    # week_end = '"2017-08-14T23:28:48Z"'
-    # years = [2016, 2017]
-    years = [2017]
+
+    years = [2016, 2017]
+    # years = [2017]
     period_build_count = []
     for year in years:
         period_build_count += (
@@ -112,36 +111,64 @@ def main():
                 var_dict["DRYRUN"],
                 var_dict["TOKEN"]))
 
+    ## user facing params going to feed-in to `weekly_count` module
+    weekly_count_params = [{
+            "query": GQL_QUERY_WEEKLY_COUNT_PIPE,
+            "topic": "pipelines"
+        },
+        {
+            "query": GQL_QUERY_WEEKLY_COUNT_TEAM,
+            "topic": "teams"
+        }]
+
+    for query_topic in weekly_count_params:
+        gql_data = access_createdAt_date(
+            GRAPHQL_URL,
+            query_topic["query"],
+            var_dict["TOKEN"],
+            query_topic["topic"])
+        weekly_stat = generate_weekly_stat(gql_data)
+        accumulated_stat = get_accumulated_weekly_stat(weekly_stat)
+        # csv_ready_data = prepare_data_for_csv(accumulated_stat, query_topic["topic"])
+        period_build_count = join_results(
+            accumulated_stat,
+            period_build_count,
+            query_topic["topic"])
+    print(period_build_count)
+
+
     # csv-ops-III
     p = ProcessCsvFile(".")
     p.prepare_result_file()
     p.write_csv_header([
         "week",
-        "passed_builds",
-        "failed_builds",
+        "pass_build",
+        "fail_build",
+        "pipelines",
+        "teams"
         ])
     for data in period_build_count:
         p.write_csv([
             data["week"],
             data["pass_build"],
             data["fail_build"],
+            data["pipelines"],
+            data["teams"],
         ])
-    build_count_dict = convert_list_to_dict(period_build_count)
-    print(build_count_dict)
+
 
 if __name__ == "__main__":
     main()
 
     # experimental...
 
-
-    # # get key program parameter ready
+    # get key program parameter ready
     # key_list = ["TOKEN", "DRYRUN", "LAMBDA"]
     # var_dict = setup_essential_var()
 
     # from bk_reporter.weekly_count import *
 
-    # # user facing params going to feed-in to `weekly_count` module
+    # # # user facing params going to feed-in to `weekly_count` module
     # weekly_count_params = [{
     #         "query": GQL_QUERY_WEEKLY_COUNT_PIPE,
     #         "topic": "pipelines"
@@ -161,6 +188,10 @@ if __name__ == "__main__":
     #     accumulated_stat = get_accumulated_weekly_stat(weekly_stat)
     #     csv_ready_data = prepare_data_for_csv(accumulated_stat, query_topic["topic"])
 
+    #     from bk_reporter.weekly_count import join_results
+    #     result = join_results(csv_ready_data, period_build_count)
+    #     print(result)
+
         # csv_process = ProcessCsvFile(".")
         # csv_process.prepare_result_file(query_topic["topic"])
         # csv_process.write_csv_header([
@@ -172,4 +203,3 @@ if __name__ == "__main__":
         #         data["week"],
         #         data[query_topic["topic"]],
         #     ])
-
