@@ -8,7 +8,7 @@ from settings import (
     GRAPHQL_URL,
     REST_API_URL)
 # import custom utils
-from bk_reporter.gql_utils import get_gql_resp
+from bk_reporter import get_gql_resp
 from bk_reporter.csv_ops import ProcessCsvFile
 # 1st feature delivery
 from bk_reporter.team_pipeline_build_stat import (
@@ -26,13 +26,13 @@ from bk_reporter.weekly_count import *
 def main():
 
     # get key program parameter ready
-    key_list = ["TOKEN", "DRYRUN", "LAMBDA"]
+    key_list = ["TOKEN", "DRYRUN"]
     var_dict = setup_essential_var()
 
 
     # setup logging
     log_config = {
-        'format': '[%(asctime)s] %(message)s',
+        'format': '[%(asctime)s] - %(levelname)s - %(name)s:\n %(message)s',
         'datefmt': '%m/%d/%Y %H:%M:%S',
         'level': logging.DEBUG if var_dict['DEBUG'] else logging.INFO,
         'stream': sys.stdout,
@@ -41,15 +41,6 @@ def main():
     logging.getLogger().setLevel(logging.DEBUG)
     LOGGER = logging.getLogger(__name__)
     LOGGER.debug("bk usage reporter stating! ")
-
-
-    # if it is running in AWS-LAMBDA, we want program dependencies in zip(./vendor)
-    if var_dict["LAMBDA"]:
-        print("I am running in AWS-LAMBDA")
-        # to ensure installed dep in ./vendor can be imported
-        sys.path.append(os.path.join(os.getcwd(), "vendor"))
-    else:
-        print("I am NOT running in AWS-LAMBDA")
 
 
     # try:
